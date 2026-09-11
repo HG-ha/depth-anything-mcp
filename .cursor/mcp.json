@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "depth-anything": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/HG-ha/depth-anything-mcp",
+        "depth-anything-mcp"
+      ],
+      "env": {
+        "DEPTH_ANYTHING_HOME": "~/.depth-anything-mcp",
+        "DEPTH_ANYTHING_DEFAULT_ENCODER": "vits",
+        "DEPTH_ANYTHING_DEVICE": "auto"
+      }
+    }
+  }
+}

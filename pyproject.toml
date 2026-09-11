@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "depth-anything-mcp"
+version = "0.1.0"
+description = "One-click MCP server for Depth Anything V2 using packable ONNX models"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "depth-anything-mcp" }]
+keywords = ["mcp", "depth-anything", "onnx", "cursor"]
+dependencies = [
+    "mcp>=1.9.0,<2",
+    "onnxruntime>=1.18.0",
+    "huggingface_hub>=0.24.0",
+    "opencv-python",
+    "pillow",
+    "numpy",
+    "tqdm",
+]
+
+[project.optional-dependencies]
+gpu = ["onnxruntime-gpu[cuda,cudnn]>=1.21.0,<1.27"]
+directml = ["onnxruntime-directml>=1.18.0"]
+native = ["torch", "torchvision", "einops", "transformers>=4.44.0"]
+dev = ["pytest"]
+
+[project.urls]
+Homepage = "https://github.com/HG-ha/depth-anything-mcp"
+Repository = "https://github.com/HG-ha/depth-anything-mcp"
+
+[project.scripts]
+depth-anything-mcp = "depth_anything_mcp.server:main"
+depth-anything-setup = "depth_anything_mcp.setup_models:main"
+depth-anything-install = "depth_anything_mcp.install:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+depth_anything_mcp = ["py.typed", "models/*.onnx", "models/*.onnx_data"]
