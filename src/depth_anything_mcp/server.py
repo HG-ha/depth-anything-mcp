@@ -255,6 +255,7 @@ def get_depth_runtime_status() -> str:
         "home": str(settings.home),
         "output_dir": str(settings.output_dir),
         "checkpoint_dir": str(settings.checkpoint_dir),
+        "mirror": settings.mirror,
         "hf_endpoint": settings.hf_endpoint,
         "cached_models": cached_models(),
         "ort_providers": runtime.get("providers") or [],
@@ -281,6 +282,7 @@ def depth_estimation_help() -> str:
         "Default backend is ONNX Runtime. No PyTorch needed.\n"
         "Images: estimate_image_depth. Videos: estimate_video_depth (per-frame DA-V2 ONNX).\n"
         "Default vits dynamic ONNX (~95MB) is bundled. Extra models download on demand.\n"
+        "China mirrors are on by default (ghfast + hf-mirror + Tsinghua PyPI). Set DEPTH_ANYTHING_MIRROR=off to disable.\n"
         "Device auto: Windows uses DirectML; Linux NVIDIA uses CUDA 12 ONNX Runtime.\n"
         "For a smaller package use variant=quantized (~38MB, two files).\n"
         "Official Video Depth Anything has no packable ONNX release."

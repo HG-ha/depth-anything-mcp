@@ -52,6 +52,10 @@ def checkpoint_exists(path: Path, *, min_bytes: int = 1) -> bool:
 def download_hf_file(repo_id: str, filename: str, dest_dir: Path) -> Path:
     from huggingface_hub import hf_hub_download
 
+    from depth_anything_mcp.mirrors import apply_download_mirrors
+
+    apply_download_mirrors()
+
     ensure_dir(dest_dir)
     downloaded = hf_hub_download(
         repo_id=repo_id,
@@ -62,19 +66,24 @@ def download_hf_file(repo_id: str, filename: str, dest_dir: Path) -> Path:
 
 
 def download_url(url: str, dest: Path, *, min_bytes: int = 1_000_000) -> Path:
+    from depth_anything_mcp.mirrors import download_url_candidates
+
     if checkpoint_exists(dest, min_bytes=min_bytes):
         return dest
     ensure_dir(dest.parent)
-    tmp = dest.with_suffix(dest.suffix + ".part")
-    try:
-        urllib.request.urlretrieve(url, tmp)
-        if tmp.stat().st_size < min_bytes:
-            raise RuntimeError(f"Downloaded file looks too small: {tmp} from {url}")
-        tmp.replace(dest)
-    finally:
-        if tmp.exists() and not dest.exists():
+    errors: list[str] = []
+    for candidate in download_url_candidates(url):
+        tmp = dest.with_suffix(dest.suffix + ".part")
+        try:
+            urllib.request.urlretrieve(candidate, tmp)
+            if tmp.stat().st_size < min_bytes:
+                raise RuntimeError(f"Downloaded file looks too small: {tmp} from {candidate}")
+            tmp.replace(dest)
+            return dest
+        except Exception as exc:
+            errors.append(f"{candidate}: {exc}")
             tmp.unlink(missing_ok=True)
-    return dest
+    raise RuntimeError(" ; ".join(errors) or f"Failed to download {url}")
 
 
 def download_onnx_quantized(encoder: str, settings: Settings) -> Path:

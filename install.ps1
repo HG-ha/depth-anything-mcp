@@ -1,13 +1,30 @@
 # One-click installer: venv + package + ONNX model + Cursor MCP config.
 # Usage:
 #   .\install.ps1
-#   irm https://raw.githubusercontent.com/HG-ha/depth-anything-mcp/main/install.ps1 | iex
+#   irm https://ghfast.top/https://raw.githubusercontent.com/HG-ha/depth-anything-mcp/main/install.ps1 | iex
 
 param(
     [string]$Repo = $(if ($env:DEPTH_ANYTHING_REPO) { $env:DEPTH_ANYTHING_REPO } else { "https://github.com/HG-ha/depth-anything-mcp.git" }),
     [ValidateSet("dynamic", "quantized")]
     [string]$Variant = "dynamic"
 )
+
+function Use-CnMirror {
+    $value = if ($null -ne $env:DEPTH_ANYTHING_MIRROR) { $env:DEPTH_ANYTHING_MIRROR } else { "cn" }
+    return @("0", "off", "false", "no", "none", "official") -notcontains $value.ToLower()
+}
+
+function Mirror-GitHubUrl([string]$Url) {
+    if (-not (Use-CnMirror)) { return $Url }
+    if ($Url -notmatch "github.com" -and $Url -notmatch "githubusercontent.com") { return $Url }
+    if ($Url -match "ghfast.top|gh-proxy.com|ghproxy|gitclone.com") { return $Url }
+    $proxy = if ($env:DEPTH_ANYTHING_GITHUB_PROXY) { $env:DEPTH_ANYTHING_GITHUB_PROXY.TrimEnd("/") } else { "https://ghfast.top" }
+    return "$proxy/$Url"
+}
+
+if (-not $env:DEPTH_ANYTHING_REPO) {
+    $Repo = Mirror-GitHubUrl $Repo
+}
 
 $ErrorActionPreference = "Stop"
 $HomeDir = Join-Path $HOME ".depth-anything-mcp"
@@ -68,8 +85,13 @@ if (-not (Test-Path (Join-Path $VenvDir "Scripts\python.exe"))) {
 }
 
 $VenvPython = Join-Path $VenvDir "Scripts\python.exe"
-& $VenvPython -m pip install -U pip
-& $VenvPython -m pip install -e $installSpec
+$PipIndex = @()
+if (Use-CnMirror) {
+    $index = if ($env:DEPTH_ANYTHING_PYPI_INDEX) { $env:DEPTH_ANYTHING_PYPI_INDEX } else { "https://pypi.tuna.tsinghua.edu.cn/simple" }
+    $PipIndex = @("-i", $index, "--trusted-host", "pypi.tuna.tsinghua.edu.cn")
+}
+& $VenvPython -m pip install -U pip @PipIndex
+& $VenvPython -m pip install @PipIndex -e $installSpec
 & $VenvPython -m depth_anything_mcp.install --home $HomeDir --python $VenvPython --variant $Variant
 
 Write-Host ""

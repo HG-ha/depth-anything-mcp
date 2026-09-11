@@ -2,11 +2,11 @@
 
 把 [Depth Anything V2](https://github.com/DepthAnything/Depth-Anything-V2) 做成 Cursor / Claude 可用的 MCP 工具。默认用 **单文件 ONNX**（约 95MB），不依赖 PyTorch。
 
-## 用 uvx 一键接入（推荐）
+## 用 uvx 一键接入（推荐，国内加速）
 
 本机先装 [uv](https://docs.astral.sh/uv/)（Windows：`powershell -c "irm https://astral.sh/uv/install.ps1 | iex"`）。
 
-把下面整段加进 Cursor 的 `~/.cursor/mcp.json`，或项目里的 `.cursor/mcp.json`，然后 Reload MCP：
+国内直连 GitHub / PyPI 容易超时。把下面整段加进 Cursor 的 `~/.cursor/mcp.json`，或项目里的 `.cursor/mcp.json`，然后 Reload MCP：
 
 ```json
 {
@@ -15,25 +15,29 @@
       "command": "uvx",
       "args": [
         "--from",
-        "git+https://github.com/HG-ha/depth-anything-mcp",
+        "git+https://ghfast.top/https://github.com/HG-ha/depth-anything-mcp",
         "depth-anything-mcp"
       ],
       "env": {
         "DEPTH_ANYTHING_HOME": "~/.depth-anything-mcp",
         "DEPTH_ANYTHING_DEFAULT_ENCODER": "vits",
-        "DEPTH_ANYTHING_DEVICE": "auto"
+        "DEPTH_ANYTHING_DEVICE": "auto",
+        "DEPTH_ANYTHING_MIRROR": "cn",
+        "HF_ENDPOINT": "https://hf-mirror.com",
+        "UV_DEFAULT_INDEX": "https://pypi.tuna.tsinghua.edu.cn/simple"
       }
     }
   }
 }
 ```
 
-`uvx` 会拉仓库并启动 MCP。默认权重 `depth_anything_v2_vits_dynamic.onnx`（约 95MB，Apache-2.0）已放在包内 `src/depth_anything_mcp/models/`，不用再单独下。
+这会走 GitHub 代理（ghfast）、Hugging Face 镜像（hf-mirror）和清华 PyPI。默认权重已打进包里，不用再单独下。代理失效可把 `ghfast.top` 换成 `gh-proxy.com`。海外用户把 `--from` 改回 `git+https://github.com/HG-ha/depth-anything-mcp`，并设 `DEPTH_ANYTHING_MIRROR=off`。
 
 只要量化版或米制模型时才会额外下载：
 
 ```powershell
-uvx --from git+https://github.com/HG-ha/depth-anything-mcp depth-anything-setup --variant quantized
+$env:UV_DEFAULT_INDEX="https://pypi.tuna.tsinghua.edu.cn/simple"
+uvx --from git+https://ghfast.top/https://github.com/HG-ha/depth-anything-mcp depth-anything-setup --variant quantized
 ```
 
 ## 其它安装方式
@@ -41,19 +45,19 @@ uvx --from git+https://github.com/HG-ha/depth-anything-mcp depth-anything-setup 
 PowerShell：
 
 ```powershell
-irm https://raw.githubusercontent.com/HG-ha/depth-anything-mcp/main/install.ps1 | iex
+irm https://ghfast.top/https://raw.githubusercontent.com/HG-ha/depth-anything-mcp/main/install.ps1 | iex
 ```
 
 macOS / Linux：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/HG-ha/depth-anything-mcp/main/install.sh | bash
+curl -fsSL https://ghfast.top/https://raw.githubusercontent.com/HG-ha/depth-anything-mcp/main/install.sh | bash
 ```
 
 或 pip：
 
 ```powershell
-pip install git+https://github.com/HG-ha/depth-anything-mcp.git
+pip install -i https://pypi.tuna.tsinghua.edu.cn/simple git+https://ghfast.top/https://github.com/HG-ha/depth-anything-mcp.git
 python -m depth_anything_mcp.install
 ```
 
@@ -101,7 +105,7 @@ Small 为 Apache-2.0。Base / Large 为 CC-BY-NC-4.0。
 "DEPTH_ANYTHING_DEVICE": "cpu"
 ```
 
-第一次走 GPU 时会换掉 CPU 版 `onnxruntime` 并拉对应 wheel，可能要一两分钟。失败会回退 CPU，日志在 stderr。
+第一次走 GPU 时会换掉 CPU 版 `onnxruntime` 并拉对应 wheel，可能要一两分钟。国内默认走清华 PyPI。失败会回退 CPU，日志在 stderr。
 
 ## 开发
 

@@ -32,6 +32,9 @@ def mcp_server_entry(python_exe: Path, home: Path) -> dict:
             "DEPTH_ANYTHING_OUTPUT_DIR": str(home / "outputs"),
             "DEPTH_ANYTHING_DEFAULT_ENCODER": "vits",
             "DEPTH_ANYTHING_DEVICE": "auto",
+            "DEPTH_ANYTHING_MIRROR": "cn",
+            "HF_ENDPOINT": "https://hf-mirror.com",
+            "UV_DEFAULT_INDEX": "https://pypi.tuna.tsinghua.edu.cn/simple",
         },
     }
 

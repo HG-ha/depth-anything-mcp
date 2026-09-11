@@ -12,6 +12,8 @@ def test_merge_mcp_keeps_other_servers(tmp_path: Path) -> None:
     data = json.loads(path.read_text(encoding="utf-8"))
     assert "other" in data["mcpServers"]
     assert data["mcpServers"]["depth-anything"]["args"] == ["-m", "depth_anything_mcp"]
+    assert data["mcpServers"]["depth-anything"]["env"]["DEPTH_ANYTHING_MIRROR"] == "cn"
+    assert data["mcpServers"]["depth-anything"]["env"]["HF_ENDPOINT"] == "https://hf-mirror.com"
 
 
 def test_deeplink_roundtrip() -> None:

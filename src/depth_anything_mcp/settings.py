@@ -4,6 +4,8 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from depth_anything_mcp.mirrors import apply_download_mirrors, mirrors_enabled
+
 
 def detect_device(preferred: str = "auto") -> str:
     """Keep this light: do not import onnxruntime/torch at settings load time."""
@@ -38,6 +40,7 @@ class Settings:
     dav2_home: Path
     vda_home: Path
     hf_endpoint: str | None
+    mirror: str
 
     @property
     def third_party_dir(self) -> Path:
@@ -51,6 +54,7 @@ class Settings:
 
 
 def load_settings() -> Settings:
+    mirror_state = apply_download_mirrors()
     home = project_root()
     output_dir = Path(os.environ.get("DEPTH_ANYTHING_OUTPUT_DIR", home / "outputs")).expanduser().resolve()
     checkpoint_dir = Path(
@@ -70,5 +74,6 @@ def load_settings() -> Settings:
         checkpoint_dir=checkpoint_dir,
         dav2_home=dav2_home,
         vda_home=vda_home,
-        hf_endpoint=os.environ.get("HF_ENDPOINT") or os.environ.get("HUGGINGFACE_HUB_ENDPOINT"),
+        hf_endpoint=str(mirror_state["hf_endpoint"] or "") or None,
+        mirror="cn" if mirrors_enabled() else "off",
     )

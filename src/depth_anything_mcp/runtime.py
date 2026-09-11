@@ -134,7 +134,13 @@ def _uv_pip_command(args: list[str]) -> list[str] | None:
     if action not in {"install", "uninstall"}:
         return None
     cleaned = [item for item in rest if item not in {"-y", "--yes", "--disable-pip-version-check"}]
-    return [uv, "pip", action, "--python", sys.executable, *cleaned]
+    command = [uv, "pip", action, "--python", sys.executable]
+    if action == "install":
+        from depth_anything_mcp.mirrors import uv_index_args
+
+        command.extend(uv_index_args())
+    command.extend(cleaned)
+    return command
 
 
 def _run_install(args: list[str]) -> None:
@@ -143,7 +149,12 @@ def _run_install(args: list[str]) -> None:
     uv_cmd = _uv_pip_command(args)
     if uv_cmd:
         commands.append(uv_cmd)
-    commands.append([sys.executable, "-m", "pip", "--disable-pip-version-check", *args])
+    pip_args = list(args)
+    if pip_args and pip_args[0] == "install":
+        from depth_anything_mcp.mirrors import pip_index_args
+
+        pip_args = [pip_args[0], *pip_index_args(), *pip_args[1:]]
+    commands.append([sys.executable, "-m", "pip", "--disable-pip-version-check", *pip_args])
     errors: list[str] = []
     for command in commands:
         try:

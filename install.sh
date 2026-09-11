@@ -2,12 +2,40 @@
 # One-click installer: venv + package + ONNX model + Cursor MCP config.
 # Usage:
 #   ./install.sh
-#   curl -fsSL https://raw.githubusercontent.com/HG-ha/depth-anything-mcp/main/install.sh | bash
+#   curl -fsSL https://ghfast.top/https://raw.githubusercontent.com/HG-ha/depth-anything-mcp/main/install.sh | bash
 
 set -euo pipefail
 
 REPO="${DEPTH_ANYTHING_REPO:-https://github.com/HG-ha/depth-anything-mcp.git}"
 VARIANT="${1:-dynamic}"
+
+use_cn_mirror() {
+  local value="${DEPTH_ANYTHING_MIRROR:-cn}"
+  case "$(printf '%s' "$value" | tr '[:upper:]' '[:lower:]')" in
+    0|off|false|no|none|official) return 1 ;;
+    *) return 0 ;;
+  esac
+}
+
+mirror_github_url() {
+  local url="$1"
+  if ! use_cn_mirror; then
+    printf '%s' "$url"
+    return
+  fi
+  case "$url" in
+    *ghfast.top*|*gh-proxy.com*|*ghproxy*|*gitclone.com*) printf '%s' "$url" ;;
+    *github.com*|*githubusercontent.com*)
+      local proxy="${DEPTH_ANYTHING_GITHUB_PROXY:-https://ghfast.top}"
+      printf '%s/%s' "${proxy%/}" "$url"
+      ;;
+    *) printf '%s' "$url" ;;
+  esac
+}
+
+if [[ -z "${DEPTH_ANYTHING_REPO:-}" ]]; then
+  REPO="$(mirror_github_url "$REPO")"
+fi
 HOME_DIR="${HOME}/.depth-anything-mcp"
 VENV_DIR="${HOME_DIR}/venv"
 SRC_DIR="${HOME_DIR}/src"
@@ -53,8 +81,13 @@ if [[ ! -x "${VENV_DIR}/bin/python" ]]; then
   "${PYTHON}" -m venv "${VENV_DIR}"
 fi
 
-"${VENV_DIR}/bin/python" -m pip install -U pip
-"${VENV_DIR}/bin/python" -m pip install -e "${INSTALL_SPEC}"
+PIP_INDEX=()
+if use_cn_mirror; then
+  INDEX_URL="${DEPTH_ANYTHING_PYPI_INDEX:-https://pypi.tuna.tsinghua.edu.cn/simple}"
+  PIP_INDEX=(-i "${INDEX_URL}" --trusted-host pypi.tuna.tsinghua.edu.cn)
+fi
+"${VENV_DIR}/bin/python" -m pip install -U pip "${PIP_INDEX[@]}"
+"${VENV_DIR}/bin/python" -m pip install "${PIP_INDEX[@]}" -e "${INSTALL_SPEC}"
 "${VENV_DIR}/bin/python" -m depth_anything_mcp.install --home "${HOME_DIR}" --python "${VENV_DIR}/bin/python" --variant "${VARIANT}"
 
 echo

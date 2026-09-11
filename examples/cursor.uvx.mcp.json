@@ -4,13 +4,16 @@
       "command": "uvx",
       "args": [
         "--from",
-        "git+https://github.com/HG-ha/depth-anything-mcp",
+        "git+https://ghfast.top/https://github.com/HG-ha/depth-anything-mcp",
         "depth-anything-mcp"
       ],
       "env": {
         "DEPTH_ANYTHING_HOME": "~/.depth-anything-mcp",
         "DEPTH_ANYTHING_DEFAULT_ENCODER": "vits",
-        "DEPTH_ANYTHING_DEVICE": "auto"
+        "DEPTH_ANYTHING_DEVICE": "auto",
+        "DEPTH_ANYTHING_MIRROR": "cn",
+        "HF_ENDPOINT": "https://hf-mirror.com",
+        "UV_DEFAULT_INDEX": "https://pypi.tuna.tsinghua.edu.cn/simple"
       }
     }
   }
