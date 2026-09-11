@@ -72,7 +72,7 @@ def estimate_video(
     max_len: int = -1,
     target_fps: int = -1,
     fp32: bool = False,
-    grayscale: bool = False,
+    grayscale: bool = True,
     save_npz: bool = False,
     save_source: bool = True,
     output_dir: str | None = None,

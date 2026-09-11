@@ -8,10 +8,12 @@ def test_normalize_and_colorize() -> None:
     stats = depth_stats(depth)
     assert stats["min"] == 0.0
     assert stats["width"] == 8
-    rgb = colorize_depth(depth)
-    assert rgb.shape == (8, 8, 3)
-    gray = colorize_depth(depth, grayscale=True)
+    gray = colorize_depth(depth)
     assert gray.shape == (8, 8, 3)
+    assert gray[..., 0].max() >= gray[..., 0].min()
+    rgb = colorize_depth(depth, grayscale=False)
+    assert rgb.shape == (8, 8, 3)
+    assert not np.array_equal(gray, rgb)
     assert np.allclose(normalize_depth(np.ones((4, 4))), 0)
 
 

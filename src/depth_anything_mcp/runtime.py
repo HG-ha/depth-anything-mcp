@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
+from importlib import metadata
 
 ORT_PACKAGES = ("onnxruntime", "onnxruntime-gpu", "onnxruntime-directml")
 # 1.21-1.26 default GPU wheels target CUDA 12.x. 1.27+ switched to CUDA 13.
@@ -102,16 +103,47 @@ def _has_ep(name: str) -> bool:
     return name in _ort_providers_safe()
 
 
-def _run_install(args: list[str]) -> None:
-    commands: list[list[str]] = [
-        [sys.executable, "-m", "pip", "--disable-pip-version-check", *args],
-    ]
+def _installed_ort_packages() -> set[str]:
+    found: set[str] = set()
+    for name in ORT_PACKAGES:
+        try:
+            metadata.version(name)
+        except metadata.PackageNotFoundError:
+            continue
+        found.add(name)
+    return found
+
+
+def _kind_package(kind: str) -> str | None:
+    if kind == "dml":
+        return "onnxruntime-directml"
+    if kind == "cuda":
+        return "onnxruntime-gpu"
+    return None
+
+
+def _ort_imported() -> bool:
+    return any(name == "onnxruntime" or name.startswith("onnxruntime.") for name in sys.modules)
+
+
+def _uv_pip_command(args: list[str]) -> list[str] | None:
     uv = shutil.which("uv")
-    if uv:
-        if args and args[0] == "install":
-            commands.append([uv, "pip", "install", "--python", sys.executable, *args[1:]])
-        elif args and args[0] == "uninstall":
-            commands.append([uv, "pip", "uninstall", "--python", sys.executable, *args[1:]])
+    if not uv or not args:
+        return None
+    action, *rest = args
+    if action not in {"install", "uninstall"}:
+        return None
+    cleaned = [item for item in rest if item not in {"-y", "--yes", "--disable-pip-version-check"}]
+    return [uv, "pip", action, "--python", sys.executable, *cleaned]
+
+
+def _run_install(args: list[str]) -> None:
+    # uvx / uv venvs often have no pip. Prefer uv, then python -m pip.
+    commands: list[list[str]] = []
+    uv_cmd = _uv_pip_command(args)
+    if uv_cmd:
+        commands.append(uv_cmd)
+    commands.append([sys.executable, "-m", "pip", "--disable-pip-version-check", *args])
     errors: list[str] = []
     for command in commands:
         try:
@@ -122,9 +154,21 @@ def _run_install(args: list[str]) -> None:
     raise RuntimeError(" ; ".join(errors) or "package install failed")
 
 
-def _install_wheel(spec: str) -> None:
+def _install_wheel(spec: str, *, allow_imported: bool = False) -> None:
+    # Windows locks ORT DLLs after import; swap packages in a fresh process.
+    if _ort_imported() and not allow_imported:
+        script = (
+            "from depth_anything_mcp.runtime import _install_wheel; "
+            f"_install_wheel({spec!r}, allow_imported=True)"
+        )
+        subprocess.check_call([sys.executable, "-c", script], stdout=sys.stderr, timeout=600)
+        _purge_ort_modules()
+        return
     try:
         _run_install(["uninstall", "-y", *ORT_PACKAGES])
+    except Exception as exc:
+        _log(f"Previous ONNX Runtime uninstall skipped: {exc}")
+    try:
         _run_install(["install", spec])
         _purge_ort_modules()
     except Exception:
@@ -178,7 +222,10 @@ def ensure_onnxruntime(preferred: str | None = None) -> dict:
         return report
 
     wanted = _wanted_ep(resolved.kind)
-    if wanted and _has_ep(wanted):
+    wanted_pkg = _kind_package(resolved.kind)
+    installed = _installed_ort_packages()
+    # Do not import onnxruntime before a package swap; Windows will lock the DLL.
+    if wanted_pkg and wanted_pkg in installed and wanted and _has_ep(wanted):
         report["providers"] = _ort_providers_safe()
         report["spec"] = resolved
         _ENSURED[cache_key] = report

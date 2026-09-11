@@ -38,7 +38,7 @@ def estimate_image_depth(
     metric_scene: str = "",
     output_dir: str = "",
     pred_only: bool = False,
-    grayscale: bool = False,
+    grayscale: bool = True,
     save_raw: bool = False,
     include_preview: bool = True,
     device: str = "",
@@ -57,7 +57,7 @@ def estimate_image_depth(
         metric_scene: Empty for relative depth. indoor (20m) or outdoor (80m) uses metric ONNX.
         output_dir: Optional output directory. Defaults to <project>/outputs/images.
         pred_only: If true, save only the depth visualization. Otherwise save input | depth.
-        grayscale: Save a grayscale depth map instead of Spectral_r color.
+        grayscale: White-hot depth map by default. Set false for MAGMA color.
         save_raw: Also save the raw HxW depth array as .npy.
         include_preview: Attach a downsized depth preview image in the MCP response.
         device: auto (default), cpu, dml, cuda, or cuda:N. Empty uses DEPTH_ANYTHING_DEVICE.
@@ -96,7 +96,7 @@ def estimate_video_depth(
     max_len: int = -1,
     target_fps: int = -1,
     fp32: bool = False,
-    grayscale: bool = False,
+    grayscale: bool = True,
     save_npz: bool = False,
     save_source: bool = True,
     output_dir: str = "",
@@ -121,7 +121,7 @@ def estimate_video_depth(
         max_len: Max frames to read. -1 means no limit. Use 32 for a smoke test.
         target_fps: Resample fps. -1 keeps the original fps.
         fp32: Native backend only.
-        grayscale: Save grayscale depth video.
+        grayscale: White-hot depth video by default. Set false for MAGMA color.
         save_npz: Also save compressed raw depths as .npz.
         save_source: Also export the (possibly resized) RGB source video.
         output_dir: Optional output directory. Defaults to <project>/outputs/videos.

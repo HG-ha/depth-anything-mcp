@@ -71,6 +71,7 @@ python -m depth_anything_mcp.install
 | `get_depth_runtime_status` | Runtime 状态 |
 
 - 图片：`image_path` 指向本地文件或 URL
+- 默认白色深度图；彩色 MAGMA：`grayscale=false`
 - 更小包：`variant=quantized`
 - 室内米制：`metric_scene=indoor`
 - 视频冒烟：`max_len=32`

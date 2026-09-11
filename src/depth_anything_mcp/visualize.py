@@ -30,8 +30,8 @@ def normalize_depth(depth: np.ndarray, vmin: float | None = None, vmax: float | 
     return np.clip((data - lo) / (hi - lo), 0.0, 1.0)
 
 
-def colorize_depth(depth: np.ndarray, *, grayscale: bool = False, vmin: float | None = None, vmax: float | None = None) -> np.ndarray:
-    """Return an RGB uint8 visualization. Uses OpenCV MAGMA (no matplotlib)."""
+def colorize_depth(depth: np.ndarray, *, grayscale: bool = True, vmin: float | None = None, vmax: float | None = None) -> np.ndarray:
+    """Return an RGB uint8 visualization. Default is white-hot grayscale; MAGMA if grayscale=False."""
     norm = normalize_depth(depth, vmin=vmin, vmax=vmax)
     gray = (norm * 255.0).astype(np.uint8)
     if grayscale:

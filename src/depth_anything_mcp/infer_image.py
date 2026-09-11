@@ -76,7 +76,7 @@ def estimate_images(
     metric_scene: str | None = None,
     output_dir: str | None = None,
     pred_only: bool = False,
-    grayscale: bool = False,
+    grayscale: bool = True,
     save_raw: bool = False,
     include_preview: bool = True,
     device: str | None = None,
